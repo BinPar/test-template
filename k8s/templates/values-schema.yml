@@ -1,0 +1,14 @@
+#@data/values-schema
+---
+projectName: ""
+#@schema/nullable
+namespace: ""
+productionDomain: ""
+environment: ""
+healthcheckPath: "/healthcheck"
+initialDelaySeconds: 10
+failureThreshold: 2
+timeoutSeconds: 5
+periodSeconds: 60
+#@schema/type any=True
+defaultConfig:
