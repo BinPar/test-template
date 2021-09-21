@@ -23,7 +23,10 @@ jobs:
       - name: NPM Install
         run: npm i
       - name: Get next version
-        run: echo "NEXT_VERSION=v$(npm_config_yes=true npx standard-version --dry-run | head -n 1 | sed -n -e 's/.*bumping version in .* from .* to \(.*\).*/\1/p')" >> $GITHUB_ENV
+        run: |
+          NEXT_VERSION_WITHOUT_V=$(npm_config_yes=true npx standard-version --dry-run | head -n 1 | sed -n -e 's/.*bumping version in .* from .* to \(.*\).*/\1/p')
+          echo "NEXT_VERSION_WITHOUT_V=$NEXT_VERSION_WITHOUT_V" >> $GITHUB_ENV
+          echo "NEXT_VERSION=v$NEXT_VERSION_WITHOUT_V" >> $GITHUB_ENV
       - name: Read project name
         uses: KJ002/read-yaml@1.5
         id: project-name-data
@@ -56,12 +59,6 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$NEXT_VERSION
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-      - name: Read environment names
-        uses: KJ002/read-yaml@1.5
-        id: env-names-data
-        with:
-          file: './k8s/templates/values.yml'
-          key-path: '["environments"]'
       - name: Setup Kubernetes Tools
         uses: yokawasa/action-setup-kube-tools@v0.8.0
         id: kubernetes-tools
@@ -72,7 +69,7 @@ jobs:
       - name: Login rancher
         run: rancher login --token ${{ secrets.RANCHER_TOKEN }} --context ${{ secrets.RANCHER_CONTEXT }} ${{ secrets.RANCHER_URL }}
       - name: Check k8s resources and create if not exists
-        run: ./.github/workflows/create-k8s-if-not-exists.sh "${{ steps.env-names-data.outputs.data }}"
+        run: ./.github/workflows/create-k8s-if-not-exists.sh "test"
       - name: Exec standard-version and update repo
         run: |
           git config user.name github-actions
@@ -96,7 +93,7 @@ jobs:
           cp ../CHANGELOG.md ./CHANGELOG.md
           git config user.name github-actions
           git config user.email github-actions@github.com
-          sed -i -e "s/\"version\": \"[^\"]*/\"version\": \"${NEXT_VERSION}/" ./package.json
+          sed -i -e "s/\"version\": \"[^\"]*/\"version\": \"${NEXT_VERSION_WITHOUT_V}/" ./package.json
           git add .
           git commit -m "chore(version): update version and changelog"
           git push
