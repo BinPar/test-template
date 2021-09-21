@@ -1,5 +1,5 @@
 #@data/values
 ---
-projectName: bpt-next
-productionDomain: bpt-next.binpar.cloud
-environments: "test pre-release release"
+projectName: test-template
+productionDomain: test-template.binpar.cloud
+environments: "test release"
